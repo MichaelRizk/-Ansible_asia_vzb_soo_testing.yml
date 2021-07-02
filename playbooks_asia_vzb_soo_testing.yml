@@ -1,0 +1,143 @@
+---
+
+- name: Testing Asia VzB SOO Primary, Secondary & tertiary
+  gather_facts: no
+  hosts: hkhon:cnbe:cnsha:krseo:thban:jptok:sg:au
+  vars:
+    provider:
+      host: "{{ansible_host}}"
+      # username and pwd will be used when calling Ansible from command-line --user=<usernmae> --ask-pass
+
+
+  tasks:
+
+
+    - name: Task1 Intial Traceroute from hosts to 4.2.2.2 before any changes
+      ios_command:
+        provider: "{{ provider }}"
+        commands: traceroute 4.2.2.2 numeric ttl 1 5
+      register: output
+      when: inventory_hostname != "sg" and inventory_hostname != "au"
+
+
+    - name: Task2 Display Traceroute Output before any changes (via Pri. SOO sg)
+      debug:
+        var: output.stdout_lines
+
+
+    - name: Task3 Pause next Task [Disable SSO Primary for Asia] when ready press Enter!
+      pause:
+
+
+
+
+
+    - name: Task4 Disable SSO Primary for Asia [sg]
+      ios_config:
+        parents: "router bgp 112"
+        lines:
+          - no network 0.0.0.0
+      when: "'sg' in inventory_hostname"
+
+
+    - name: Task5 Pause next Task [traceroute] for 30 Sec to ensure SSO Sec. Route is installed
+      pause:
+        seconds: 30
+
+
+
+
+
+
+    - name: Task6 Traceroute from hosts to 4.2.2.2
+      ios_command:
+        provider: "{{ provider }}"
+        commands: traceroute 4.2.2.2 numeric ttl 1 5
+      register: output
+      when: inventory_hostname != "sg" and inventory_hostname != "au"
+
+
+    - name: Task7 Display Traceroute Output (via Sec. SOO au)
+      debug:
+        var: output.stdout_lines
+
+
+    - name: Task8 Pause next Task [Disable SSO Secondary for Asia] when ready press Enter!
+      pause:
+
+
+
+
+
+    - name: Task9 Disable SSO Secondary for Asia [au]
+      ios_config:
+        parents: "router bgp 141"
+        lines:
+          - no network 0.0.0.0
+      when: "'au' in inventory_hostname"
+
+
+    - name: Task10 Pause next Task [traceroute] for 30 Sec to ensure SSO Tertiary Route is installed
+      pause:
+        seconds: 30
+
+
+
+
+
+    - name: Task11 Traceroute from hosts to 4.2.2.2
+      ios_command:
+        provider: "{{ provider }}"
+        commands: traceroute 4.2.2.2 numeric ttl 1 5
+      register: output
+      when: inventory_hostname != "sg" and inventory_hostname != "au"
+
+
+    - name: Task12 Display Output (via Ter. HAR DC )
+      debug:
+        var: output.stdout_lines
+
+
+    - name: Task13 Pause next Task [Enable SSO Primary & Secondary for Asia] when ready press Enter!
+      pause:
+
+
+
+
+
+    - name: Task14 Enable SSO Primary for Asia [sg]
+      ios_config:
+        parents: "router bgp 121"
+        lines:
+          - network 0.0.0.0
+      when: "'sg' in inventory_hostname"
+
+
+    - name: Task15 Enable SSO Secondary for Asia [au]
+      ios_config:
+        parents: "router bgp 141"
+        lines:
+          - network 0.0.0.0
+      when: "'au' in inventory_hostname" 
+          
+          
+    - name: Task16 Pause next Task [traceroute] for 30 Sec to ensure SSO Primary Route is installed
+      pause:
+        seconds: 30
+
+
+
+
+
+    - name: Task17 Final Traceroute from hosts to 4.2.2.2 After all changes
+      ios_command:
+        provider: "{{ provider }}"
+        commands: traceroute 4.2.2.2 numeric ttl 1 5
+      register: output
+      when: inventory_hostname != "sg" and inventory_hostname != "au"      
+
+      
+    - name: Task18 Display FINAL Output (via Pri. SOO sg )
+      debug:
+        var: output.stdout_lines          
+          
